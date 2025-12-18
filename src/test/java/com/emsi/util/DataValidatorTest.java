@@ -23,24 +23,39 @@ class DataValidatorTest {
 
     @Test
     void generateRandomString_ShouldReturnString() {
-        String result = DataValidator.generateRandomString(10, true);
+        String result = DataValidator.generateRandomString(10);
         assertNotNull(result);
         assertEquals(10, result.length());
     }
 
     @Test
-    void validateEmail_WithValidEmail_ShouldReturnTrue() {
-        assertTrue(DataValidator.validateEmail("test@example.com"));
+    void isValidEmail_WithValidEmail_ShouldReturnTrue() {
+        assertTrue(DataValidator.isValidEmail("test@example.com"));
     }
 
     @Test
-    void validateEmail_WithInvalidEmail_ShouldReturnFalse() {
-        assertFalse(DataValidator.validateEmail("invalid"));
+    void isValidEmail_WithInvalidEmail_ShouldReturnFalse() {
+        assertFalse(DataValidator.isValidEmail("invalid"));
     }
 
     @Test
-    void validateEmail_WithNull_ShouldReturnFalse() {
-        assertFalse(DataValidator.validateEmail(null));
+    void isValidEmail_WithNull_ShouldReturnFalse() {
+        assertFalse(DataValidator.isValidEmail(null));
+    }
+
+    @Test
+    void isValidName_WithValidName_ShouldReturnTrue() {
+        assertTrue(DataValidator.isValidName("John Doe"));
+    }
+
+    @Test
+    void isValidName_WithNull_ShouldReturnFalse() {
+        assertFalse(DataValidator.isValidName(null));
+    }
+
+    @Test
+    void isValidName_WithEmptyString_ShouldReturnFalse() {
+        assertFalse(DataValidator.isValidName("   "));
     }
 }
 

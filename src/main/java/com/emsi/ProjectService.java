@@ -19,8 +19,8 @@ public class ProjectService {
     }
 
     public Project getProjectById(Integer id) {
-        // Intentional code smell: No null check or proper exception handling
-        return projectRepository.findById(id).get();
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Project not found: " + id));
     }
 
     public void createProject(Project project) {
@@ -28,27 +28,17 @@ public class ProjectService {
         projectRepository.save(project);
     }
 
-    // Intentional code smell: Method too long with duplicated code
     public void updateProjectStatus(Integer id, String status) {
-        Project project = projectRepository.findById(id).get();
-        if (status.equals("STARTED")) {
-            project.setStatus("STARTED");
+        Project project = getProjectById(id);
+        project.setStatus(status);
+
+        if ("STARTED".equals(status)) {
             project.setStartDate(new Date());
-            projectRepository.save(project);
-        } else if (status.equals("IN_PROGRESS")) {
-            project.setStatus("IN_PROGRESS");
-            projectRepository.save(project);
-        } else if (status.equals("COMPLETED")) {
-            project.setStatus("COMPLETED");
+        } else if ("COMPLETED".equals(status)) {
             project.setEndDate(new Date());
-            projectRepository.save(project);
-        } else if (status.equals("CANCELLED")) {
-            project.setStatus("CANCELLED");
-            projectRepository.save(project);
-        } else if (status.equals("ON_HOLD")) {
-            project.setStatus("ON_HOLD");
-            projectRepository.save(project);
         }
+
+        projectRepository.save(project);
     }
 
     public List<Project> getProjectsByEngineer(Integer engineerId) {
@@ -56,23 +46,11 @@ public class ProjectService {
     }
 
     public List<Project> searchProjects(String name) {
-        // Intentional security issue: No input sanitization
         return projectRepository.searchByName(name);
     }
 
-    // Intentional code smell: Unused method
-    private void unusedMethod() {
-        System.out.println("This method is never called");
-    }
-
-    // Intentional code duplication
     public void deleteProject(Integer id) {
-        Project project = projectRepository.findById(id).get();
-        projectRepository.delete(project);
-    }
-
-    public void removeProject(Integer id) {
-        Project project = projectRepository.findById(id).get();
+        Project project = getProjectById(id);
         projectRepository.delete(project);
     }
 }

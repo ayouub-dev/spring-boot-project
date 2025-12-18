@@ -1,5 +1,7 @@
 package com.emsi;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +12,7 @@ import java.util.List;
 @RequestMapping("api/v1/projects")
 public class ProjectController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ProjectController.class);
     private final ProjectService projectService;
 
     public ProjectController(ProjectService projectService) {
@@ -55,12 +58,11 @@ public class ProjectController {
         projectService.deleteProject(id);
     }
 
-    // Intentional code smell: Exception handling with printStackTrace
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
-        e.printStackTrace(); // Code smell: printStackTrace usage
+        logger.error("An error occurred", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error: " + e.getMessage());
+                .body("An internal error occurred");
     }
 }
 

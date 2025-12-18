@@ -1,55 +1,74 @@
 package com.emsi.util;
 
+    import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileProcessor {
+public final class FileProcessor {
 
-    // Intentional bug: Resources not properly closed
+    private static final Logger logger = LoggerFactory.getLogger(FileProcessor.class);
+    private static final int MAX_LENGTH_DEFAULT = 1000;
+
+    private FileProcessor() {
+        throw new IllegalStateException("Utility class cannot be instantiated");
+    }
+
     public static List<String> readFile(String filePath) throws IOException {
+        validateFilePath(filePath);
         List<String> lines = new ArrayList<>();
-        BufferedReader reader = new BufferedReader(new FileReader(filePath));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            lines.add(line);
+
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
         }
-        // Intentional bug: Reader not closed - resource leak
+
         return lines;
     }
 
-    // Intentional security issue: Path traversal vulnerability
-    public static void writeToFile(String filename, String content) {
-        try {
-            FileWriter writer = new FileWriter(filename);
+    public static void writeToFile(String filename, String content) throws IOException {
+        validateFilePath(filename);
+        Path path = Paths.get(filename).normalize();
+
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(content);
-            writer.close();
         } catch (IOException e) {
-            // Intentional code smell: Empty catch block
+            logger.error("Failed to write to file: {}", filename, e);
+            throw e;
         }
     }
 
-    // Intentional code smell: Method with too many parameters
-    public static String processData(String input, boolean trim, boolean lowercase,
-                                     boolean removeSpaces, boolean removeNumbers,
-                                     boolean removePunctuation, int maxLength) {
+    public static String processData(String input, ProcessingOptions options) {
+        if (input == null) {
+            return "";
+        }
+
         String result = input;
 
-        if (trim) {
+        if (options.isTrim()) {
             result = result.trim();
         }
-        if (lowercase) {
+        if (options.isLowercase()) {
             result = result.toLowerCase();
         }
-        if (removeSpaces) {
+        if (options.isRemoveSpaces()) {
             result = result.replace(" ", "");
         }
-        if (removeNumbers) {
+        if (options.isRemoveNumbers()) {
             result = result.replaceAll("[0-9]", "");
         }
-        if (removePunctuation) {
+        if (options.isRemovePunctuation()) {
             result = result.replaceAll("[^a-zA-Z0-9]", "");
         }
+
+        int maxLength = options.getMaxLength() > 0 ? options.getMaxLength() : MAX_LENGTH_DEFAULT;
         if (result.length() > maxLength) {
             result = result.substring(0, maxLength);
         }
@@ -57,7 +76,6 @@ public class FileProcessor {
         return result;
     }
 
-    // Intentional code smell: Cognitive complexity too high
     public static boolean validateFileExtension(String filename, String[] allowedExtensions) {
         if (filename == null || filename.isEmpty()) {
             return false;
@@ -67,12 +85,8 @@ public class FileProcessor {
             return true;
         }
 
-        String extension = "";
-        int dotIndex = filename.lastIndexOf('.');
-
-        if (dotIndex > 0 && dotIndex < filename.length() - 1) {
-            extension = filename.substring(dotIndex + 1);
-        } else {
+        String extension = getFileExtension(filename);
+        if (extension.isEmpty()) {
             return false;
         }
 
@@ -83,6 +97,54 @@ public class FileProcessor {
         }
 
         return false;
+    }
+
+    private static String getFileExtension(String filename) {
+        int dotIndex = filename.lastIndexOf('.');
+
+        if (dotIndex > 0 && dotIndex < filename.length() - 1) {
+            return filename.substring(dotIndex + 1);
+        }
+
+        return "";
+    }
+
+    private static void validateFilePath(String filePath) {
+        if (filePath == null || filePath.trim().isEmpty()) {
+            throw new IllegalArgumentException("File path cannot be null or empty");
+        }
+
+        Path path = Paths.get(filePath).normalize();
+        if (path.toString().contains("..")) {
+            throw new SecurityException("Path traversal attempt detected");
+        }
+    }
+
+    public static class ProcessingOptions {
+        private boolean trim;
+        private boolean lowercase;
+        private boolean removeSpaces;
+        private boolean removeNumbers;
+        private boolean removePunctuation;
+        private int maxLength;
+
+        public boolean isTrim() { return trim; }
+        public void setTrim(boolean trim) { this.trim = trim; }
+
+        public boolean isLowercase() { return lowercase; }
+        public void setLowercase(boolean lowercase) { this.lowercase = lowercase; }
+
+        public boolean isRemoveSpaces() { return removeSpaces; }
+        public void setRemoveSpaces(boolean removeSpaces) { this.removeSpaces = removeSpaces; }
+
+        public boolean isRemoveNumbers() { return removeNumbers; }
+        public void setRemoveNumbers(boolean removeNumbers) { this.removeNumbers = removeNumbers; }
+
+        public boolean isRemovePunctuation() { return removePunctuation; }
+        public void setRemovePunctuation(boolean removePunctuation) { this.removePunctuation = removePunctuation; }
+
+        public int getMaxLength() { return maxLength; }
+        public void setMaxLength(int maxLength) { this.maxLength = maxLength; }
     }
 }
 

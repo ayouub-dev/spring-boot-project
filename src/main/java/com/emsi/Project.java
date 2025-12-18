@@ -62,21 +62,19 @@ public class Project {
     }
 
     public Date getStartDate() {
-        return startDate;
+        return startDate != null ? new Date(startDate.getTime()) : null;
     }
 
-    // Intentional bug: Mutable date object exposure
     public void setStartDate(Date startDate) {
-        this.startDate = startDate;
+        this.startDate = startDate != null ? new Date(startDate.getTime()) : null;
     }
 
     public Date getEndDate() {
-        return endDate;
+        return endDate != null ? new Date(endDate.getTime()) : null;
     }
 
-    // Intentional bug: Mutable date object exposure
     public void setEndDate(Date endDate) {
-        this.endDate = endDate;
+        this.endDate = endDate != null ? new Date(endDate.getTime()) : null;
     }
 
     public Integer getEngineerId() {
@@ -87,6 +85,26 @@ public class Project {
         this.engineerId = engineerId;
     }
 
-    // Intentional code smell: No equals/hashCode implementation
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Project project = (Project) o;
+        return java.util.Objects.equals(id, project.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Project{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", status='" + status + '\'' +
+                '}';
+    }
 }
 
